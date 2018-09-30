@@ -1,30 +1,40 @@
-// Flexible Compound Components with context
-
 import React from 'react'
 import {Switch} from '../switch'
 
-const ToggleContext = React.createContext({
-  on: false,
-  toggle: () => {},
-})
+const ToggleContext = React.createContext()
+
+function ToggleConsumer(props) {
+  return (
+    <ToggleContext.Consumer {...props}>
+      {context => {
+        if (!context) {
+          throw new Error(
+            `Toggle compound components cannot be rendered outside the Toggle component`,
+          )
+        }
+        return props.children(context)
+      }}
+    </ToggleContext.Consumer>
+  )
+}
 
 class Toggle extends React.Component {
   static On = ({children}) => (
-    <ToggleContext.Consumer>
-      {context => (context.on ? children : null)}
-    </ToggleContext.Consumer>
+    <ToggleConsumer>
+      {({on}) => (on ? children : null)}
+    </ToggleConsumer>
   )
   static Off = ({children}) => (
-    <ToggleContext.Consumer>
-      {context => (context.on ? null : children)}
-    </ToggleContext.Consumer>
+    <ToggleConsumer>
+      {({on}) => (on ? null : children)}
+    </ToggleConsumer>
   )
   static Button = props => (
-    <ToggleContext.Consumer>
-      {context => (
-        <Switch on={context.on} onClick={context.toggle} {...props} />
+    <ToggleConsumer>
+      {({on, toggle}) => (
+        <Switch on={on} onClick={toggle} {...props} />
       )}
-    </ToggleContext.Consumer>
+    </ToggleConsumer>
   )
 
   toggle = () =>
@@ -44,13 +54,6 @@ class Toggle extends React.Component {
   }
 }
 
-// 💯 Extra credit: rather than having a default value, make it so the consumer
-// will throw an error if there's no context value to make sure people don't
-// attempt to render one of the compound components outside the Toggle.
-// 💯 Extra credit: avoid unecessary re-renders of the consumers by not
-// creating a new `value` object ever render and instead passing an object
-// which only changes when the state changes.
-
 // Don't make changes to the Usage component. It's here to show you how your
 // component is intended to be used and is used in the tests.
 // You can make all the tests pass by updating the Toggle component.
@@ -58,14 +61,16 @@ function Usage({
   onToggle = (...args) => console.log('onToggle', ...args),
 }) {
   return (
-    <Toggle onToggle={onToggle}>
-      <Toggle.On>The button is on</Toggle.On>
-      <Toggle.Off>The button is off</Toggle.Off>
-      <div>
-        <Toggle.Button />
-      </div>
-      <span>Hello</span>
-    </Toggle>
+    <div>
+      <Toggle onToggle={onToggle}>
+        <Toggle.On>The button is on</Toggle.On>
+        <Toggle.Off>The button is off</Toggle.Off>
+        <div>
+          <Toggle.Button />
+        </div>
+        <span>Hello</span>
+      </Toggle>
+    </div>
   )
 }
 Usage.title = 'Flexible Compound Components'
